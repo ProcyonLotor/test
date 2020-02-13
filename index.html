@@ -2,7 +2,14 @@
 <html lang="en">
   <head>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/css/ol.css" type="text/css">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">  
     <style>
+        .marker {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            font-size: 24px;
+        }
       .map {
         height: 800px;
         width: 100%;
@@ -22,6 +29,7 @@ position:relative;
   <body>
     <h2>My map ej</h2>
     <div id="map" class="map"></div>
+    <div id="location" class="marker icon-flag"></div>
     <div id="mouse_position"></div>
     <form class="form-inline">
             <label>Geometry type &nbsp;</label>  <!--&nbsp = Ajout d'un espace -->
@@ -94,6 +102,15 @@ var mousePosition = new ol.control.MousePosition({
 
 map.addControl(mousePosition);
 
+var marker = new ol.Overlay({
+element: document.getElementById('location')
+});
+map.addOverlay(marker);
+var geolocation = new ol.Geolocation({
+tracking: true
+});
+geolocation.bindTo('projection', view);
+geolocation.bindTo('position', marker);        
 
         
 /*        
@@ -136,3 +153,4 @@ this);
 <!-- -->
 <!-- https://drive.google.com/file/d/1FIkJHieYRxBTF7fEI2PSh3QHt60aNT22/view-->
 <!-- Aide net https://github.com/openlayers/openlayers/tree/master/examples/data/geojson-->
+
