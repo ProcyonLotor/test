@@ -29,16 +29,8 @@ position:relative;
   <body>
     <h2>My map ej</h2>
     <div id="map" class="map"></div>
-    <div id="location" class="marker icon-flag"></div>
+    <div id="location"></div>
     <div id="mouse_position"></div>
-    <form class="form-inline">
-            <label>Geometry type &nbsp;</label>  <!--&nbsp = Ajout d'un espace -->
-                <select id="type">
-                        <option value="Point">Point</option>
-                        <option value="LineString">LineString</option>
-                        <option value="Polygon">Polygon</option>
-            </select>
-    </form>  
     <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>  
     <script type="text/javascript">
     
@@ -106,44 +98,12 @@ var marker = new ol.Overlay({
 element: document.getElementById('location')
 });
 map.addOverlay(marker);
+        
 var geolocation = new ol.Geolocation({
 tracking: true
 });
-geolocation.bindTo('projection', view);
-geolocation.bindTo('position', marker);        
-
         
-/*        
-//Ajout de la fonction draw:
-var typeSelect = document.getElementById('type');
-        function addInteraction() {
-            draw = new ol.interaction.Draw({
-                source: source,
-                type: typeSelect.value
-                });
-            map.addInteraction(draw);
-}
-    typeSelect.onchange = function(e) {
-            map.removeInteraction(draw);
-        addInteraction();
-    };
-addInteraction();  
-draw.on('drawend',
-function(evt) {
-console.log(evt.feature);
-var parser = new ol.format.GeoJSON();
-var features = source.getFeatures();
-var featuresGeoJSON = parser.writeFeatures(features);
-$.ajax({
-url: '/features.geojson',
-type: 'POST',
-data: featuresGeoJSON
-}).then(function(response) {
-console.log(response);
-});
-},
-this);
-*/        
+   
     </script>
   </body>
 </html>
@@ -153,4 +113,3 @@ this);
 <!-- -->
 <!-- https://drive.google.com/file/d/1FIkJHieYRxBTF7fEI2PSh3QHt60aNT22/view-->
 <!-- Aide net https://github.com/openlayers/openlayers/tree/master/examples/data/geojson-->
-
