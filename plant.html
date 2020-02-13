@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/css/ol.css" type="text/css">
+    <style>
+      .map {
+        height: 800px;
+        width: 100%;
+      }
+#mouse_position {
+  color: black;
+  font-family: Times New Roman;
+  font-weight: bold;
+position:relative;
+}
+  
+    </style>
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.5.0/proj4.js"></script>
+    <title>OpenLayers example</title>
+  </head>
+  <body>
+    <h2>My map ej</h2>
+    <div id="map" class="map"></div>
+    <div id="mouse_position"></div>
+    <form class="form-inline">
+            <label>Geometry type &nbsp;</label>  <!--&nbsp = Ajout d'un espace -->
+                <select id="type">
+                        <option value="Point">Point</option>
+                        <option value="LineString">LineString</option>
+                        <option value="Polygon">Polygon</option>
+            </select>
+    </form>  
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>  
+    <script type="text/javascript">
+    
+// Définiton de la projection
+// Grâce à ce site: https://stackoverflow.com/questions/56811090/superpose-two-maps-with-different-projections
+  proj4.defs("EPSG:2056","+proj=somerc +lat_0=46.95240555555556 +lon_0=7.439583333333333 +k_0=1 +x_0=2600000 +y_0=1200000 +ellps=bessel +towgs84=674.374,15.056,405.346,0,0,0,0 +units=m +no_defs");
+  ol.proj.proj4.register(proj4);
+
+var switzerland = new ol.layer.Vector({
+    title: 'Building',
+    source: new ol.source.Vector({
+    url:'https://raw.githubusercontent.com/openlayers/openlayers/master/examples/data/geojson/switzerland.geojson',
+    format: new ol.format.GeoJSON()
+    })
+      });  
+        
+var country = new ol.layer.Vector({
+    source: new ol.source.Vector({
+        url:'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
+        format: new ol.format.GeoJSON(),
+    })
+}); 
+        
+var surface_ej  = new ol.layer.Vector({
+    source: new ol.source.Vector({
+        url:'https://raw.githubusercontent.com/ProcyonLotor/test/master/polygon.geojson',
+        format: new ol.format.GeoJSON(),
+    })
+});        
+        
+
+
+
+   
+var map = new ol.Map({
+    controls: ol.control.defaults({
+		attribution : true,
+		}).extend([new ol.control.ScaleLine(), 
+                   new ol.control.FullScreen,
+				   new ol.control.ZoomSlider, // affichage de l'échelle
+                   new ol.control.ZoomToExtent
+				]),
+    target: 'map',
+    layers: [
+         new ol.layer.Tile({
+           source: new ol.source.OSM()
+      }),  surface_ej
+      ],
+    view: new ol.View({
+        center: ol.proj.transform([7.251713, 47.131105], 'EPSG:4326', 'EPSG:3857'),
+        zoom: 16
+        })
+      });
+
+var mousePosition = new ol.control.MousePosition({
+        coordinateFormat: ol.coordinate.createStringXY(2),
+        projection: 'EPSG:2056',
+        target: document.getElementById('mouse_position'),
+        undefinedHTML: '&nbsp;'
+      });
+
+map.addControl(mousePosition);
+
+
+        
+/*        
+//Ajout de la fonction draw:
+var typeSelect = document.getElementById('type');
+        function addInteraction() {
+            draw = new ol.interaction.Draw({
+                source: source,
+                type: typeSelect.value
+                });
+            map.addInteraction(draw);
+}
+    typeSelect.onchange = function(e) {
+            map.removeInteraction(draw);
+        addInteraction();
+    };
+addInteraction();  
+draw.on('drawend',
+function(evt) {
+console.log(evt.feature);
+var parser = new ol.format.GeoJSON();
+var features = source.getFeatures();
+var featuresGeoJSON = parser.writeFeatures(features);
+$.ajax({
+url: '/features.geojson',
+type: 'POST',
+data: featuresGeoJSON
+}).then(function(response) {
+console.log(response);
+});
+},
+this);
+*/        
+    </script>
+  </body>
+</html>
+
+<!--  https://drive.google.com/file/d/1FIkJHieYRxBTF7fEI2PSh3QHt60aNT22/view?usp=sharing-->
+
+<!-- -->
+<!-- https://drive.google.com/file/d/1FIkJHieYRxBTF7fEI2PSh3QHt60aNT22/view-->
+<!-- Aide net https://github.com/openlayers/openlayers/tree/master/examples/data/geojson-->
