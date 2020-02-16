@@ -2,35 +2,67 @@
 <html lang="en">
   <head>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/css/ol.css" type="text/css">
-    <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">  
     <style>
-        .marker {
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            font-size: 24px;
-        }
       .map {
         height: 800px;
         width: 100%;
       }
-#mouse_position {
-  color: black;
-  font-family: Times New Roman;
-  font-weight: bold;
-position:relative;
-}
-  
+       #mouse_position {
+            color: black;
+            font-family: Times New Roman;
+            font-weight: bold;
+            position:relative;
+        }
+    .ol-control button {
+        background-color: #000000; /*Zoom +- / Fit to extend / Zoomslider */
+        }
+    .ol-control button:focus { /*Full screen */
+        background-color: #000000; 
+        }
+    .ol-control button:hover {
+        background-color: #488e96;
+        }
+        .ol-scale-line {
+            background-color: #000000; 
+        }
+        .ol-overviewmap {
+            left: em;
+            bottom: 2em;
+        }
+    .ol-rotate {
+        top: 3em;
+      }  
+    .ol-zoom-extent button {
+        background-image: url(https://raw.githubusercontent.com/ProcyonLotor/test/master/swiss.jpg);
+        background-size: 100%;
+    }    
+    .info-label {
+        font-family: Palatino, serif;
+        font-style: italic;
+        }
+    .ol-attribution ul{
+        background-size: contain;
+        margin: 5px;
+        background-image: url(https://raw.githubusercontent.com/ProcyonLotor/test/master/raccoon.png);
+        background-repeat: no-repeat;
+        background-position: 0em;
+        padding-left: 30px;
+        }     
+   
     </style>
     <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.5.0/proj4.js"></script>
     <title>OpenLayers example</title>
   </head>
   <body>
-    <h2>My map ej</h2>
+    <h1>Mes débuts en web mapping</h1>
+    <!--<h2>My map ej</h2> -->
     <div id="map" class="map"></div>
-    <div id="location"></div>
+    <div id="location" class="marker icon-flag"></div>
     <div id="mouse_position"></div>
+    <label for="track">
+      track position
+      <input id="track" type="checkbox"/>
     <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>  
     <script type="text/javascript">
     
@@ -38,6 +70,28 @@ position:relative;
 // Grâce à ce site: https://stackoverflow.com/questions/56811090/superpose-two-maps-with-different-projections
   proj4.defs("EPSG:2056","+proj=somerc +lat_0=46.95240555555556 +lon_0=7.439583333333333 +k_0=1 +x_0=2600000 +y_0=1200000 +ellps=bessel +towgs84=674.374,15.056,405.346,0,0,0,0 +units=m +no_defs");
   ol.proj.proj4.register(proj4);
+        
+var infoLabel = document.createElement('span'); //style pour les attributions
+infoLabel.className = 'info-label';
+infoLabel.textContent = 'i';        
+        
+var OSM =new ol.layer.Tile({
+           source: new ol.source.OSM({
+            attributions: ['©  <a href ="http://www.openstreetmap.org/copyright">OpenStreetMap</a></b>'],
+           })   
+});
+        
+var satelitte = new ol.layer.Tile({ // Ajout d'un fichier google satelitte XYZ
+		 title: "Satelitte",
+         source: new ol.source.XYZ({
+         url: 'http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}',
+        attributions: '© <a href="http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}' +
+          'en/home.html">Google Satellite</a>', 
+         }),
+            visible: true,
+            is_base_layer: true
+           });
+satelitte.setOpacity(01)        
 
 var switzerland = new ol.layer.Vector({
     title: 'Building',
@@ -62,22 +116,35 @@ var surface_ej  = new ol.layer.Vector({
 });        
         
 
-
-
    
 var map = new ol.Map({
     controls: ol.control.defaults({
-		attribution : true,
-		}).extend([new ol.control.ScaleLine(), 
+		attribution : false,
+		}).extend([new ol.control.OverviewMap({
+        collapsible: true,
+	    collapsed: true,
+        layers:[satelitte, country],
+        tipLabel: 'Aperçu'
+    }),
+                   new ol.control.Attribution({
+                    collapsible: true,
+                    label: infoLabel,   
+                   }),
+                   new ol.control.ScaleLine(), 
                    new ol.control.FullScreen,
 				   new ol.control.ZoomSlider, // affichage de l'échelle
-                   new ol.control.ZoomToExtent
+                   new ol.control.ZoomToExtent({
+                       label:'',
+                       extent:[
+                           663007.9728612009, 6075047.409059666, //ID certifié - EPSG:3857  // CRS - WGS84/Pseudo-Mercator
+                       1167983.162586068, 5751224.775429485]     // Emprise ds QGIS: MINX, MAXY, MAXY, MINY
+                   })
 				]),
     target: 'map',
-    layers: [
-         new ol.layer.Tile({
-           source: new ol.source.OSM()
-      }),  surface_ej
+    layers: [OSM,
+             satelitte, 
+             country, 
+             surface_ej
       ],
     view: new ol.View({
         center: ol.proj.transform([7.251713, 47.131105], 'EPSG:4326', 'EPSG:3857'),
@@ -93,17 +160,11 @@ var mousePosition = new ol.control.MousePosition({
       });
 
 map.addControl(mousePosition);
+map.addControl(new ol.control.LayerSwitcher());
+        
+let highlightedFeatures = [];
 
-var marker = new ol.Overlay({
-element: document.getElementById('location')
-});
-map.addOverlay(marker);
-        
-var geolocation = new ol.Geolocation({
-tracking: true
-});
-        
-   
+    
     </script>
   </body>
 </html>
