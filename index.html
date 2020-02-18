@@ -47,8 +47,16 @@
         background-repeat: no-repeat;
         background-position: 0em;
         padding-left: 30px;
-        }     
-   
+        }  
+        .champs {
+        font-family: "Helvetica";
+        }  
+        .champs:before {
+             content: "Country: ";
+             font-family: "Helvetica";
+             color: black;
+            font-weight: bold;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.5.0/proj4.js"></script>
@@ -58,12 +66,9 @@
     <h1>Mes débuts en web mapping</h1>
     <!--<h2>My map ej</h2> -->
     <div id="map" class="map"></div>
-    <div id="location" class="marker icon-flag"></div>
     <div id="mouse_position"></div>
-    <label for="track">
-      track position
-      <input id="track" type="checkbox"/>
-    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>  
+      <div id="name" class="champs">
+      </div>
     <script type="text/javascript">
     
 // Définiton de la projection
@@ -91,7 +96,10 @@ var satelitte = new ol.layer.Tile({ // Ajout d'un fichier google satelitte XYZ
             visible: true,
             is_base_layer: true
            });
-satelitte.setOpacity(01)        
+satelitte.setOpacity(01)     
+        
+        
+       
 
 var switzerland = new ol.layer.Vector({
     title: 'Building',
@@ -101,11 +109,17 @@ var switzerland = new ol.layer.Vector({
     })
       });  
         
+     
+        
 var country = new ol.layer.Vector({
     source: new ol.source.Vector({
-        url:'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
+        url:'https://raw.githubusercontent.com/openlayers/openlayers/master/examples/data/geojson/countries.geojson',
         format: new ol.format.GeoJSON(),
-    })
+    }), 
+    style: function(feature) {
+    style.getText().setText(feature.get('name'));
+    return style;
+  }
 }); 
         
 var surface_ej  = new ol.layer.Vector({
@@ -115,7 +129,26 @@ var surface_ej  = new ol.layer.Vector({
     })
 });        
         
-
+//style pour les countries mais static        
+var style = new ol.style.Style({
+  fill: new ol.style.Fill({
+    color: 'rgba(255, 255, 255, 0.2)'
+  }),
+  stroke: new ol.style.Stroke({
+    color: '#76d331',
+    width: 1.5
+  }),
+  text: new ol.style.Text({
+    font: '14px Helvetica',
+    fill: new ol.style.Fill({
+      color: '#000'
+    }),
+    stroke: new ol.style.Stroke({
+      color: '#fff',
+      width: 3
+    })
+  })
+}); 
    
 var map = new ol.Map({
     controls: ol.control.defaults({
@@ -151,7 +184,24 @@ var map = new ol.Map({
         zoom: 16
         })
       });
+        
+   
 
+//Cette partie a pour but d'afficher un champs du même nom quelque soit la couche que la souris survole   
+map.on('pointermove',onMouseMove); // 'pointermove' est un event, ou dit autrement un 
+
+function onMouseMove (browserEvent) {
+                       var coordinate = browserEvent.coordinate;
+                       var pixel = map.getPixelFromCoordinate(coordinate);
+                       var el = document.getElementById('name');
+                       el.innerHTML ='';
+                        map.forEachFeatureAtPixel(pixel, function(feature) {
+                        el.innerHTML += feature.get('name') + '<br>';
+                        });
+                       }
+//fin de l'affichage d'un champs selon la position du pointeur.        
+
+//Pour l'affichage des coordonnées de la souris        
 var mousePosition = new ol.control.MousePosition({
         coordinateFormat: ol.coordinate.createStringXY(2),
         projection: 'EPSG:2056',
@@ -160,12 +210,9 @@ var mousePosition = new ol.control.MousePosition({
       });
 
 map.addControl(mousePosition);
-map.addControl(new ol.control.LayerSwitcher());
-        
-let highlightedFeatures = [];
-
+map.addControl(new ol.control.LayerSwitcher());         
     
-    </script>
+      </script>
   </body>
 </html>
 
