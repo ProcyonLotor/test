@@ -57,6 +57,54 @@
              color: black;
             font-weight: bold;
         }
+    .ol-popup {
+        position: absolute;
+        min-width: 180px;
+        background-color: white;
+        -webkit-filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2));
+        filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2));
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        bottom: 12px;
+        left: -50px;
+    }
+
+    .ol-popup:after,
+    .ol-popup:before {
+        top: 100%;
+        border: solid transparent;
+        content: " ";
+        height: 0;
+        width: 0;
+        position: absolute;
+        pointer-events: none;
+    }
+
+    .ol-popup:after {
+        border-top-color: white;
+        border-width: 10px;
+        left: 48px;
+        margin-left: -10px;
+    }
+
+    .ol-popup:before {
+        border-top-color: #cccccc;
+        border-width: 11px;
+        left: 48px;
+        margin-left: -11px;
+    }
+
+    .ol-popup-closer {
+        text-decoration: none;
+        position: absolute;
+        top: 2px;
+        right: 8px;
+    }
+
+    .ol-popup-closer:after {
+        content: "✖";
+    }    
     </style>
     <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.5.0/proj4.js"></script>
@@ -69,6 +117,9 @@
     <div id="mouse_position"></div>
       <div id="name" class="champs">
       </div>
+    <div id="popup" class="ol-popup">
+        <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+        <div id="popup-content"></div>  
     <script type="text/javascript">
     
 // Définiton de la projection
@@ -149,6 +200,47 @@ var style = new ol.style.Style({
     })
   })
 }); 
+
+ var container = document.getElementById('popup');
+    var content = document.getElementById('popup-content');
+    var closer = document.getElementById('popup-closer');
+
+    var overlay = new ol.Overlay(({
+        element: container,
+        autoPan: true,
+        offset: [0, -10]
+    }));
+
+    closer.onclick = function() {
+        overlay.setPosition(undefined);
+        closer.blur();
+        return false;
+    };
+var url = "https://www.geologycloud.tw/api/v1/zh-tw/CGPS?t=.json"
+
+    var vectorLayer = new ol.layer.Vector({
+        source: new ol.source.Vector({
+            url: url,
+            format: new ol.format.GeoJSON()
+        }),
+        style: function(feature) {
+
+            return new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'rgb(3,91,178)',
+                    width: 2
+                }),
+                fill: new ol.style.Fill({
+                    color: 'rgba(3,91,178,0.5)'
+                }),
+                image: new ol.style.Circle({
+                    fill: new ol.style.Fill({ color: 'rgba(3,91,178,0.5)' }),
+                    radius: 5,
+                    stroke: new ol.style.Stroke({ color: 'rgb(3,91,178)', width: 1 })
+                })
+            })
+        }
+    });        
    
 var map = new ol.Map({
     controls: ol.control.defaults({
@@ -177,8 +269,10 @@ var map = new ol.Map({
     layers: [OSM,
              satelitte, 
              country, 
-             surface_ej
+             surface_ej,
+             vectorLayer
       ],
+    overlays: [overlay],
     view: new ol.View({
         center: ol.proj.transform([7.251713, 47.131105], 'EPSG:4326', 'EPSG:3857'),
         zoom: 16
@@ -201,6 +295,27 @@ function onMouseMove (browserEvent) {
                        }
 //fin de l'affichage d'un champs selon la position du pointeur.        
 
+        
+ map.on('click', function(evt) {
+        var feature = map.forEachFeatureAtPixel(evt.pixel,
+            function(feature, layer) {
+                return feature;
+            });
+        if (feature) {
+            var geometry = feature.getGeometry();
+            HTML = '';
+            var pro = feature.getProperties();
+            delete pro.geometry
+            for (var q in pro) {
+
+                HTML += q + ":" + pro[q] + '\n';
+            }
+
+            content.innerText = HTML;
+            overlay.setPosition(evt.coordinate);
+        };
+    });        
+        
 //Pour l'affichage des coordonnées de la souris        
 var mousePosition = new ol.control.MousePosition({
         coordinateFormat: ol.coordinate.createStringXY(2),
@@ -210,8 +325,7 @@ var mousePosition = new ol.control.MousePosition({
       });
 
 map.addControl(mousePosition);
-map.addControl(new ol.control.LayerSwitcher());         
-    
+
       </script>
   </body>
 </html>
