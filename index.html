@@ -3,10 +3,37 @@
   <head>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/css/ol.css" type="text/css">
     <style>
+        * {
+            box-sizing: border-box
+        }
+        
+        body{
+            margin:0;
+            padding: 0
+        }
+        
+        .title {
+            margin:0px;
+            padding: 0.1px;
+            text-align: center;
+            background: steelblue;
+            color: white;
+            font-size: 30px;
+        }
+        
+        .grid-container{
+            display: grid;
+            grid-template-columns: 10vw 90vw;
+            grid-template-rows: 0vh;
+        }
+        
+        .sidebar{
+            margin-left: 10px;
+        }
       .map {
         height: 800px;
-        width: 100%;
-      }
+        width: 100;
+        }
        #mouse_position {
             color: black;
             font-family: Times New Roman;
@@ -48,14 +75,15 @@
         background-position: 0em;
         padding-left: 30px;
         }  
-        .champs {
+    .champs {  
         font-family: "Helvetica";
         }  
-        .champs:before {
-             content: "Country: ";
-             font-family: "Helvetica";
-             color: black;
-            font-weight: bold;
+    .champs:before {
+        content: "Country: \A ";
+        white-space: pre-wrap;
+        font-family: "Helvetica";
+        color: black;
+        font-weight: bold;
         }
     .ol-popup {
         position: absolute;
@@ -104,6 +132,7 @@
 
     .ol-popup-closer:after {
         content: "✖";
+        color: darkorange;
     }    
     </style>
     <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"></script>
@@ -111,16 +140,33 @@
     <title>OpenLayers example</title>
   </head>
   <body>
-    <h1>Mes débuts en web mapping</h1>
+    <div class="title">
+      <h2>Web mapping beginnings</h2>
+      </div>  
+    <div class="grid-container">
+        <div class="grid-1">
+            <div class= "sidebar">
+                <h2>Base layers</h2>
+                <input type="radio" name='baseLayerRadioButton' value='OSMStandard'checked>OSM Standard<br>
+                <input type="radio" name='baseLayerRadioButton' value='GoogleSatellite'>Google Satellite<br>
+                <input type="radio" name='baseLayerRadioButton' value='StamenTerrain'>Stamen Terrain<br>
+            </div>
+        </div>
+    
+        <div class="grid-2">
+            <div id="js-map" class=map></div>
+            <div id="mouse_position"></div>
+            <div id="name" class="champs"></div>
+            <div id="popup" class="ol-popup">
+                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+                <div id="popup-content"></div>  
+            </div>
+        </div>  
+    </div>    
+    
     <!--<h2>My map ej</h2> -->
-    <div id="map" class="map"></div>
-    <div id="mouse_position"></div>
-      <div id="name" class="champs">
-      </div>
-    <div id="popup" class="ol-popup">
-        <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-        <div id="popup-content"></div>  
-    <script type="text/javascript">
+    
+    <script>
     
 // Définiton de la projection
 // Grâce à ce site: https://stackoverflow.com/questions/56811090/superpose-two-maps-with-different-projections
@@ -131,29 +177,42 @@ var infoLabel = document.createElement('span'); //style pour les attributions
 infoLabel.className = 'info-label';
 infoLabel.textContent = 'i';        
         
-var OSM =new ol.layer.Tile({
+const openStreetMapStandard =new ol.layer.Tile({
            source: new ol.source.OSM({
             attributions: ['©  <a href ="http://www.openstreetmap.org/copyright">OpenStreetMap</a></b>'],
-           })   
-});
-        
-var satelitte = new ol.layer.Tile({ // Ajout d'un fichier google satelitte XYZ
-		 title: "Satelitte",
+           }),
+        visible: true,
+        title: 'OSMStandard',
+    })   
+   
+const GoogleSatellite = new ol.layer.Tile({ 
          source: new ol.source.XYZ({
          url: 'http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}',
-        attributions: '© <a href="http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}' +
+         attributions: '© <a href="http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}' +
           'en/home.html">Google Satellite</a>', 
          }),
-            visible: true,
-            is_base_layer: true
-           });
-satelitte.setOpacity(01)     
+        visible: false,
+        title: 'GoogleSatellite',
+           })        
         
+const StamenTerrain = new ol.layer.Tile({
+        source: new ol.source.Stamen({
+        layer: 'terrain'}),
+        visible: false,
+        title:'StamenTerrain'   
+      })
         
-       
+//Layer Group
+const baseLayerGroup = new ol.layer.Group({
+    layers:[
+       openStreetMapStandard, GoogleSatellite, StamenTerrain
+    ]
+})
+
+    
 
 var switzerland = new ol.layer.Vector({
-    title: 'Building',
+    title: 'Switzerland',
     source: new ol.source.Vector({
     url:'https://raw.githubusercontent.com/openlayers/openlayers/master/examples/data/geojson/switzerland.geojson',
     format: new ol.format.GeoJSON()
@@ -163,6 +222,7 @@ var switzerland = new ol.layer.Vector({
      
         
 var country = new ol.layer.Vector({
+    title: 'Country',
     source: new ol.source.Vector({
         url:'https://raw.githubusercontent.com/openlayers/openlayers/master/examples/data/geojson/countries.geojson',
         format: new ol.format.GeoJSON(),
@@ -174,6 +234,7 @@ var country = new ol.layer.Vector({
 }); 
         
 var surface_ej  = new ol.layer.Vector({
+    title: 'surface_ej',
     source: new ol.source.Vector({
         url:'https://raw.githubusercontent.com/ProcyonLotor/test/master/polygon.geojson',
         format: new ol.format.GeoJSON(),
@@ -218,7 +279,7 @@ var style = new ol.style.Style({
     };
 var url = "https://www.geologycloud.tw/api/v1/zh-tw/CGPS?t=.json"
 
-    var vectorLayer = new ol.layer.Vector({
+var vectorLayer = new ol.layer.Vector({
         source: new ol.source.Vector({
             url: url,
             format: new ol.format.GeoJSON()
@@ -240,7 +301,15 @@ var url = "https://www.geologycloud.tw/api/v1/zh-tw/CGPS?t=.json"
                 })
             })
         }
-    });        
+    });    
+        
+//Overlay Group
+const OverlayLayerGroup = new ol.layer.Group({
+    layers:[
+       country, surface_ej, vectorLayer
+    ]
+});
+        
    
 var map = new ol.Map({
     controls: ol.control.defaults({
@@ -248,7 +317,7 @@ var map = new ol.Map({
 		}).extend([new ol.control.OverviewMap({
         collapsible: true,
 	    collapsed: true,
-        layers:[satelitte, country],
+        layers:[openStreetMapStandard],
         tipLabel: 'Aperçu'
     }),
                    new ol.control.Attribution({
@@ -265,13 +334,7 @@ var map = new ol.Map({
                        1167983.162586068, 5751224.775429485]     // Emprise ds QGIS: MINX, MAXY, MAXY, MINY
                    })
 				]),
-    target: 'map',
-    layers: [OSM,
-             satelitte, 
-             country, 
-             surface_ej,
-             vectorLayer
-      ],
+    target: 'js-map',
     overlays: [overlay],
     view: new ol.View({
         center: ol.proj.transform([7.251713, 47.131105], 'EPSG:4326', 'EPSG:3857'),
@@ -279,7 +342,23 @@ var map = new ol.Map({
         })
       });
         
-   
+map.addLayer(baseLayerGroup);  
+map.addLayer(OverlayLayerGroup);          
+        
+// Layer Switcher Logic for Basemaps
+const baseLayerElements = document.querySelectorAll('.sidebar > input[type=radio]');
+    for(let baseLayerElement of baseLayerElements){
+       baseLayerElement.addEventListener('change', function(){
+           let baseLayerElementValue = this.value;
+           baseLayerGroup.getLayers().forEach(function(element, index, array){
+               let baseLayerTitle = element.get('title');
+               element.setVisible(baseLayerTitle === baseLayerElementValue);
+               //console.log('baseLayerTitle:' + baseLayerTitle, 'baseLayerElementValue: ' +baseLayerElementValue);
+               //console.log(baseLayerTitle === baseLayerElementValue);
+               console.log(element.get('title'), element.get('visible'));
+           }) 
+       }) 
+    }        
 
 //Cette partie a pour but d'afficher un champs du même nom quelque soit la couche que la souris survole   
 map.on('pointermove',onMouseMove); // 'pointermove' est un event, ou dit autrement un 
@@ -289,9 +368,12 @@ function onMouseMove (browserEvent) {
                        var pixel = map.getPixelFromCoordinate(coordinate);
                        var el = document.getElementById('name');
                        el.innerHTML ='';
-                        map.forEachFeatureAtPixel(pixel, function(feature) {
+                        map.forEachFeatureAtPixel(pixel, function(feature, layer) {
                         el.innerHTML += feature.get('name') + '<br>';
-                        });
+                        },
+                        {layerFilter: function(layer) {     //filter pour n'afficher les coordonnées que d'une seule couche sélectionnée
+                            return layer === country;
+                        }});
                        }
 //fin de l'affichage d'un champs selon la position du pointeur.        
 
@@ -308,7 +390,7 @@ function onMouseMove (browserEvent) {
             delete pro.geometry
             for (var q in pro) {
 
-                HTML += q + ":" + pro[q] + '\n';
+                HTML += q + ": " + pro[q] + '\n';
             }
 
             content.innerText = HTML;
@@ -325,10 +407,11 @@ var mousePosition = new ol.control.MousePosition({
       });
 
 map.addControl(mousePosition);
+        
 
       </script>
-  </body>
-</html>
+  <body>
+<html>
 
 <!--  https://drive.google.com/file/d/1FIkJHieYRxBTF7fEI2PSh3QHt60aNT22/view?usp=sharing-->
 
